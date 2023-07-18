@@ -1,4 +1,4 @@
-import { Controller, UseGuards } from '@nestjs/common';
+import { BadRequestException, Controller, UseGuards } from '@nestjs/common';
 import { Body, Get, Param, Post } from '@nestjs/common/decorators';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create_user.dto';

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create_user.dto';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -30,11 +30,11 @@ export class UserService {
     return this.userRepository.save(user);
   }
 
-  findOne(id: number) {
-    return this.userRepository.findOneBy({ id });
+  async findOne(id: number): Promise<User> {
+   return this.userRepository.findOneBy({ id });   
   }
 
-  findOneByUsername(username: string) {
+  findOneByUsername(username: string) :Promise<User> {
     return this.userRepository.findOneBy({ username });
   }
 
