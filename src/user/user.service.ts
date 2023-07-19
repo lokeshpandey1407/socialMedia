@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create_user.dto';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -10,36 +10,68 @@ export class UserService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-  ) {}
+  ) { }
 
   async createUser(createUserDto: CreateUserDto): Promise<User> {
+    const {name, bio,username, email, profile_image, age, password} = createUserDto;
+    const existingEmailUser = await this.userRepository.findOneBy({ email });
+    if (existingEmailUser) {
+      throw new ConflictException('Email is already registered');
+    }
+
+    const existingUsernameUser = await this.userRepository.findOneBy({username});
+    if(existingUsernameUser){
+      throw new ConflictException('Username is already taken')
+    }
+
     const user = new User();
-    user.name = createUserDto.name;
-    user.email = createUserDto.email;
-    user.bio = createUserDto.bio;
-    user.username = createUserDto.username;
+    user.name = name;
+    user.email = email;
+    user.bio = bio;
+    user.username = username;
     try {
-      const hash = await bcrypt.hash(createUserDto.password, 8);
+      const hash = await bcrypt.hash(password, 8);
       user.password = hash;
     } catch (err) {
       console.error(err);
       throw new Error('Failed to hash password');
     }
-    user.profile_image = createUserDto.profile_image;
-    user.age = 29;
+    user.profile_image = profile_image;
+    user.age = age;
     return this.userRepository.save(user);
   }
 
   async findOne(id: number): Promise<User> {
-   return this.userRepository.findOneBy({ id });   
+   return this.userRepository.findOneBy({ id }).then(user => {
+      if (!user) {
+        throw new NotFoundException()
+      }
+      else return user
+    })
   }
 
-  findOneByUsername(username: string) :Promise<User> {
-    return this.userRepository.findOneBy({ username });
+  async findOneByUsername(username: string): Promise<User> {
+    return this.userRepository.findOneBy({ username }).then(user => {
+      if(!user){
+        throw new NotFoundException()
+      } else return user
+    })
   }
 
-  findOneByEmail(email: string) {
-    return this.userRepository.findOneBy({ email });
+  async findOneByEmail(email: string) :Promise<User> {
+    return this.userRepository.findOneBy({ email }).then(user=>{
+      if(!user){
+        throw new NotFoundException()
+      }else return user
+    })
+  }
+
+  async findOneByName (name:string) :Promise <User>{
+    return this.userRepository.findOneBy({name}).then (user =>{
+      if(!user){
+        throw new NotFoundException()
+      }else return user
+    })
   }
 
   findAll(): Promise<User[]> {
